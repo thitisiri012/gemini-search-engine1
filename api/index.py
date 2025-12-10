@@ -1,7 +1,9 @@
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
 import json
-import google.generativeai as genai
+import sys
+
+# โค้ดนี้ถูกเขียนมาเพื่อ "ดักจับ Error" โดยเฉพาะ
+# จะไม่ทำให้เกิดหน้าจอ 500 แต่จะบอกสาเหตุที่แท้จริงแทน
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -10,23 +12,33 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
+        report = {
+            "status": "Checking system...",
+            "python_version": sys.version,
+            "error_details": ""
+        }
+
+        # 1. เช็คว่าลง Library Google หรือยัง?
         try:
-            # --- วิธีไม้ตาย: ฝัง Key ตรงๆ ---
-            # (ถ้าโค้ดนี้ทำงานได้ แสดงว่าปัญหาอยู่ที่ Vercel Environment จริงๆ)
-            my_secret_key = "AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48"
+            import google.generativeai as genai
+            report["library_check"] = "✅ ติดตั้ง google-generativeai สำเร็จ"
+        except ImportError as e:
+            report["library_check"] = f"❌ พังตรงนี้: หา Library ไม่เจอ ({str(e)})"
+            report["hint"] = "เช็คไฟล์ requirements.txt ว่าสะกดถูกไหม"
+            self.wfile.write(json.dumps(report, ensure_ascii=False, indent=2).encode('utf-8'))
+            return
+
+        # 2. เช็คว่าเรียกใช้ Gemini ได้ไหม?
+        try:
+            # ใส่ Key ตรงๆ เพื่อทดสอบระบบ (Hardcode)
+            genai.configure(api_key="AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48")
+            model = genai.GenerativeModel('gemini-pro')
+            response = model.generate_content("ตอบสั้นๆว่า 'พร้อมใช้งาน'")
             
-            genai.configure(api_key=my_secret_key)
-           model = genai.GenerativeModel('gemini-pro') 
-            # ---------------------------
-
-            query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
-
-            if not query:
-                self.wfile.write(json.dumps({"answer": "เชื่อมต่อสำเร็จแล้ว! (โหมดฝัง Key)"}, ensure_ascii=False).encode('utf-8'))
-                return
-
-            response = model.generate_content(query)
-            self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
-
+            report["gemini_response"] = response.text
+            report["final_result"] = "🎉 ยินดีด้วย! ระบบทำงานได้แล้ว"
+            
         except Exception as e:
-            self.wfile.write(json.dumps({"answer": f"Error: {str(e)}"}, ensure_ascii=False).encode('utf-8'))
+            report["gemini_check"] = f"❌ พังตอนเรียก AI: {str(e)}"
+        
+        self.wfile.write(json.dumps(report, ensure_ascii=False, indent=2).encode('utf-8'))
