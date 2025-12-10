@@ -23,8 +23,8 @@ class handler(BaseHTTPRequestHandler):
                 api_key = "AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48"
 
             # --- วิธีใหม่: ยิงตรงเข้า Google ไม่ผ่าน Library (ตัดปัญหาเรื่องเวอร์ชันทิ้งถาวร) ---
-            # ใช้ Gemini 1.5 Flash ผ่าน URL โดยตรง
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            # เปลี่ยนเป็น gemini-pro แทน เพราะเป็นรุ่นมาตรฐานที่ URL ไม่เคยเปลี่ยน
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={api_key}"
             headers = {'Content-Type': 'application/json'}
             data = {
                 "contents": [{
