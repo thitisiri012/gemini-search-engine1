@@ -16,7 +16,7 @@ class handler(BaseHTTPRequestHandler):
             my_secret_key = "AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48"
             
             genai.configure(api_key=my_secret_key)
-            model = genai.GenerativeModel('gemini-1.5-flash') 
+           model = genai.GenerativeModel('gemini-pro') 
             # ---------------------------
 
             query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
