@@ -26,7 +26,8 @@ class handler(BaseHTTPRequestHandler):
             genai.configure(api_key=api_key)
             
             # --- แก้ตรงนี้เป็นรุ่นที่มีในลิสต์ของคุณ ---
-            model = genai.GenerativeModel('gemini-1.5-flash') 
+            # model = genai.GenerativeModel('gemini-1.5-flash') 
+            model="gemini-2.5-flash", contents="Explain how AI works in a few words"
             # ------------------------------------
 
             if not query:
