@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Search Engine</title>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; }
+        input { padding: 15px; width: 60%; border-radius: 25px; border: 1px solid #ddd; font-size: 16px; outline: none; }
+        button { padding: 15px 30px; border-radius: 25px; border: none; background-color: #0070f3; color: white; cursor: pointer; font-size: 16px; margin-left: 10px; }
+        button:hover { background-color: #0051a2; }
+        #result { margin-top: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; max-width: 800px; text-align: left; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <h1>🤖 อัพดุล เบิ้ล เอ้ย อัจฉริยะ ถามอะไรก็ตอบได้</h1>
+    <div>
+        <input type="text" id="q" placeholder="อยากรู้อะไร ถามมาได้เลย...">
+        <button onclick="askAI()">ค้นหา</button>
+    </div>
+    <div id="result" style="display:none;"></div>
+
+    <script>
+        async function askAI() {
+            const q = document.getElementById('q').value;
+            const resultBox = document.getElementById('result');
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = 'กำลังคิดคำตอบ... ⏳';
+            
+            try {
+                const response = await fetch(`/api/index?q=${encodeURIComponent(q)}`);
+                const data = await response.json();
+                resultBox.innerHTML = data.answer.replace(/\n/g, '<br>'); // จัดหน้าให้อ่านง่าย
+            } catch (err) {
+                resultBox.innerHTML = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+            }
+        }
+    </script>
+</body>
+</html>
