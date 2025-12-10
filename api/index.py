@@ -27,7 +27,7 @@ class handler(BaseHTTPRequestHandler):
             
             # --- แก้ตรงนี้เป็นรุ่นที่มีในลิสต์ของคุณ ---
             # model = genai.GenerativeModel('gemini-1.5-flash') 
-            model="gemini-2.5-flash", contents="Explain how AI works in a few words"
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
             # ------------------------------------
 
             if not query:
