@@ -12,26 +12,30 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
         try:
-            # 1. รับคำถาม
             query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
-            
-            if not query:
-                self.wfile.write(json.dumps({"answer": "พร้อมรับใช้ครับ! พิมพ์คำถามมาได้เลย"}, ensure_ascii=False).encode('utf-8'))
-                return
-
-            # 2. ดึงกุญแจ (สำคัญมาก)
             api_key = os.environ.get("GEMINI_API_KEY")
             
             if not api_key:
-                self.wfile.write(json.dumps({"answer": "Error: ลืมใส่ GEMINI_API_KEY ใน Vercel ครับ"}, ensure_ascii=False).encode('utf-8'))
+                self.wfile.write(json.dumps({"answer": "Error: ไม่พบ API Key"}, ensure_ascii=False).encode('utf-8'))
                 return
 
-            # 3. ถาม AI
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.0-pro')
-            response = model.generate_content(query)
+
+            # --- จุดสำคัญ: ลองใช้ชื่อ gemini-pro ดูก่อน ---
+            try:
+                model = genai.GenerativeModel('gemini-pro') 
+                response = model.generate_content(query)
+                self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
             
-            self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
+            except Exception as e:
+                # --- ถ้า Error ให้มันบอกชื่อรุ่นที่มีทั้งหมดออกมา ---
+                available_models = []
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        available_models.append(m.name)
+                
+                error_msg = f"เกิดข้อผิดพลาด: {str(e)}\n\n(ระบบมองเห็นรุ่นเหล่านี้: {', '.join(available_models)})"
+                self.wfile.write(json.dumps({"answer": error_msg}, ensure_ascii=False).encode('utf-8'))
 
         except Exception as e:
-            self.wfile.write(json.dumps({"answer": f"เกิดข้อผิดพลาด: {str(e)}"}, ensure_ascii=False).encode('utf-8'))
+            self.wfile.write(json.dumps({"answer": f"System Error: {str(e)}"}, ensure_ascii=False).encode('utf-8'))
