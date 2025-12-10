@@ -17,7 +17,7 @@ class handler(BaseHTTPRequestHandler):
             query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
             
             # 2. เช็ค Key
-            api_key = os.environ.get("GEMINI_API_KEY")
+            api_key = os.environ.get("GemeniKey")
             if not api_key:
                 self.wfile.write(json.dumps({"answer": "Error: ไม่พบ API Key"}, ensure_ascii=False).encode('utf-8'))
                 return
