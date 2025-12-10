@@ -28,7 +28,7 @@ class handler(BaseHTTPRequestHandler):
 
             # 3. ถาม AI
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-1.0-pro')
             response = model.generate_content(query)
             
             self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
