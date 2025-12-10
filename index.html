@@ -3,38 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Search Engine</title>
+    <title>Gemini Search Engine</title>
     <style>
-        body { font-family: 'Sarabun', sans-serif; text-align: center; padding: 50px; background-color: #f0f2f5; }
-        input { padding: 15px; width: 60%; border-radius: 25px; border: 1px solid #ddd; font-size: 16px; outline: none; }
-        button { padding: 15px 30px; border-radius: 25px; border: none; background-color: #0070f3; color: white; cursor: pointer; font-size: 16px; margin-left: 10px; }
-        button:hover { background-color: #0051a2; }
-        #result { margin-top: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; max-width: 800px; text-align: left; line-height: 1.6; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: none;
+        }
+        .result-box.show {
+            display: block;
+        }
+        .result-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        .result-content {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 18px;
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+        .error {
+            color: #dc3545;
+            padding: 15px;
+            background: #f8d7da;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        .error.show {
+            display: block;
+        }
+        .note {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #856404;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>🤖 อัพดุล เบิ้ล เอ้ย อัจฉริยะ ถามอะไรก็ตอบได้</h1>
-    <div>
-        <input type="text" id="q" placeholder="อยากรู้อะไร ถามมาได้เลย...">
-        <button onclick="askAI()">ค้นหา</button>
+    <div class="container">
+        <h1>🤖 Gemini Search Engine</h1>
+        
+        <div class="note">
+            💡 <strong>คำแนะนำ:</strong> ใส่ Gemini API Key ของคุณเพื่อเริ่มใช้งาน (รับฟรีได้ที่ <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a>)
+        </div>
+
+        <div class="input-group">
+            <label for="apiKey">🔑 Gemini API Key:</label>
+            <input type="text" id="apiKey" placeholder="ใส่ API Key ของคุณที่นี่ (เช่น AIzaSy...)">
+        </div>
+
+        <div class="input-group">
+            <label for="question">❓ คำถามของคุณ:</label>
+            <textarea id="question" placeholder="พิมพ์คำถามที่ต้องการถามกับ Gemini..."></textarea>
+        </div>
+
+        <button id="searchBtn" onclick="searchGemini()">🔍 ค้นหาคำตอบ</button>
+
+        <div class="loading" id="loading">
+            <p>⏳ กำลังค้นหาคำตอบ...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result-box" id="resultBox">
+            <h3>✨ คำตอบจาก Gemini:</h3>
+            <div class="result-content" id="result"></div>
+        </div>
     </div>
-    <div id="result" style="display:none;"></div>
 
     <script>
-        async function askAI() {
-            const q = document.getElementById('q').value;
-            const resultBox = document.getElementById('result');
-            resultBox.style.display = 'block';
-            resultBox.innerHTML = 'กำลังคิดคำตอบ... ⏳';
-            
+        async function searchGemini() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const question = document.getElementById('question').value.trim();
+            const searchBtn = document.getElementById('searchBtn');
+            const loading = document.getElementById('loading');
+            const resultBox = document.getElementById('resultBox');
+            const result = document.getElementById('result');
+            const errorBox = document.getElementById('error');
+
+            // ซ่อน error และผลลัพธ์เก่า
+            errorBox.classList.remove('show');
+            resultBox.classList.remove('show');
+
+            // ตรวจสอบ input
+            if (!apiKey) {
+                showError('❌ กรุณาใส่ API Key');
+                return;
+            }
+
+            if (!question) {
+                showError('❌ กรุณาใส่คำถาม');
+                return;
+            }
+
+            // แสดง loading
+            loading.classList.add('show');
+            searchBtn.disabled = true;
+
             try {
-                const response = await fetch(`/api/index?q=${encodeURIComponent(q)}`);
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: question
+                            }]
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || 'เกิดข้อผิดพลาดในการเชื่อมต่อ API');
+                }
+
                 const data = await response.json();
-                resultBox.innerHTML = data.answer.replace(/\n/g, '<br>'); // จัดหน้าให้อ่านง่าย
-            } catch (err) {
-                resultBox.innerHTML = 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
+                
+                if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+                    const answer = data.candidates[0].content.parts[0].text;
+                    result.textContent = answer;
+                    resultBox.classList.add('show');
+                } else {
+                    throw new Error('ไม่พบคำตอบจาก Gemini');
+                }
+
+            } catch (error) {
+                showError(`❌ เกิดข้อผิดพลาด: ${error.message}`);
+            } finally {
+                loading.classList.remove('show');
+                searchBtn.disabled = false;
             }
         }
+
+        function showError(message) {
+            const errorBox = document.getElementById('error');
+            errorBox.textContent = message;
+            errorBox.classList.add('show');
+        }
+
+        // ให้กด Enter ส่งคำถามได้
+        document.getElementById('question').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                searchGemini();
+            }
+        });
     </script>
 </body>
 </html>
