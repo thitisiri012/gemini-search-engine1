@@ -1,2 +1,2 @@
 # gemini-search-engine1
-For Gemini 12.589
+For Gemini 13.00
