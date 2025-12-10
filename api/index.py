@@ -1,7 +1,6 @@
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import json
-import os
 import google.generativeai as genai
 
 class handler(BaseHTTPRequestHandler):
@@ -12,33 +11,22 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
         try:
-            query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
+            # --- วิธีไม้ตาย: ฝัง Key ตรงๆ ---
+            # (ถ้าโค้ดนี้ทำงานได้ แสดงว่าปัญหาอยู่ที่ Vercel Environment จริงๆ)
+            my_secret_key = "AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48"
             
-            # 1. ดึงค่าจากตัวแปรชื่อ 'GemeniKey' (ตามที่คุณตั้ง)
-            api_key = os.environ.get("GemeniKey")
-            
-            if not api_key:
-                self.wfile.write(json.dumps({"answer": "Error: ไม่พบ 'GemeniKey' ในการตั้งค่า Vercel"}, ensure_ascii=False).encode('utf-8'))
-                return
+            genai.configure(api_key=my_secret_key)
+            model = genai.GenerativeModel('gemini-1.5-flash') 
+            # ---------------------------
 
-            # 2. ตั้งค่า AI
-            genai.configure(api_key=api_key)
-            
-            # 3. เรียกใช้โมเดล Gemini 3.0 Pro 
-            # (ชื่ออย่างเป็นทางการในระบบคือ 'gemini-exp-1206' หรือรุ่นทดลองล่าสุด)
-            # แต่เพื่อความชัวร์และฟรี ผมแนะนำรุ่นนี้ครับ:
-            model = genai.GenerativeModel('gemini-2.0-flash-exp') 
-            
-            # หมายเหตุ: ตอนนี้ Google ยังไม่เปิด 'gemini-3.0-pro' ให้ใช้ผ่าน API สาธารณะทั่วไป
-            # แต่รุ่น 'gemini-2.0-flash-exp' คือตัวท็อปสุดที่ฟรีและเร็วที่สุดตอนนี้ครับ
-            # (ถ้าอนาคต 3.0 มาจริง แค่เปลี่ยนชื่อตรงนี้เป็น 'gemini-3.0-pro')
+            query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
 
             if not query:
-                self.wfile.write(json.dumps({"answer": "พร้อมใช้งานครับ! ถามมาได้เลย"}, ensure_ascii=False).encode('utf-8'))
+                self.wfile.write(json.dumps({"answer": "เชื่อมต่อสำเร็จแล้ว! (โหมดฝัง Key)"}, ensure_ascii=False).encode('utf-8'))
                 return
 
             response = model.generate_content(query)
             self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
 
         except Exception as e:
-            self.wfile.write(json.dumps({"answer": f"เกิดข้อผิดพลาด: {str(e)}"}, ensure_ascii=False).encode('utf-8'))
+            self.wfile.write(json.dumps({"answer": f"Error: {str(e)}"}, ensure_ascii=False).encode('utf-8'))
