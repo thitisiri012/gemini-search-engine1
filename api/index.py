@@ -1,9 +1,8 @@
 from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse, parse_qs
 import json
-import sys
-
-# โค้ดนี้ถูกเขียนมาเพื่อ "ดักจับ Error" โดยเฉพาะ
-# จะไม่ทำให้เกิดหน้าจอ 500 แต่จะบอกสาเหตุที่แท้จริงแทน
+import os
+import google.generativeai as genai
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -12,33 +11,27 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
-        report = {
-            "status": "Checking system...",
-            "python_version": sys.version,
-            "error_details": ""
-        }
-
-        # 1. เช็คว่าลง Library Google หรือยัง?
         try:
-            import google.generativeai as genai
-            report["library_check"] = "✅ ติดตั้ง google-generativeai สำเร็จ"
-        except ImportError as e:
-            report["library_check"] = f"❌ พังตรงนี้: หา Library ไม่เจอ ({str(e)})"
-            report["hint"] = "เช็คไฟล์ requirements.txt ว่าสะกดถูกไหม"
-            self.wfile.write(json.dumps(report, ensure_ascii=False, indent=2).encode('utf-8'))
-            return
+            query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
+            
+            # ใช้ Key ที่คุณตั้งไว้ใน Vercel
+            api_key = os.environ.get("GemeniKey")
+            
+            # หรือถ้ายังไม่ได้แก้ใน Vercel จะแอบใส่ตรงนี้ชั่วคราวก็ได้ (แต่ไม่แนะนำถาวร)
+            if not api_key:
+                api_key = "AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48"
 
-        # 2. เช็คว่าเรียกใช้ Gemini ได้ไหม?
-        try:
-            # ใส่ Key ตรงๆ เพื่อทดสอบระบบ (Hardcode)
-            genai.configure(api_key="AIzaSyD0D6PyhkKk5WUA6qQeC1omUpxy9Ni-A48")
-            model = genai.GenerativeModel('gemini-pro')
-            response = model.generate_content("ตอบสั้นๆว่า 'พร้อมใช้งาน'")
+            genai.configure(api_key=api_key)
             
-            report["gemini_response"] = response.text
-            report["final_result"] = "🎉 ยินดีด้วย! ระบบทำงานได้แล้ว"
-            
+            # ใช้รุ่น Flash (เร็วและฟรี)
+            model = genai.GenerativeModel('gemini-1.5-flash')
+
+            if not query:
+                self.wfile.write(json.dumps({"answer": "พร้อมรับคำสั่งแล้วครับ!"}, ensure_ascii=False).encode('utf-8'))
+                return
+
+            response = model.generate_content(query)
+            self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
+
         except Exception as e:
-            report["gemini_check"] = f"❌ พังตอนเรียก AI: {str(e)}"
-        
-        self.wfile.write(json.dumps(report, ensure_ascii=False, indent=2).encode('utf-8'))
+            self.wfile.write(json.dumps({"answer": f"Error: {str(e)}"}, ensure_ascii=False).encode('utf-8'))
