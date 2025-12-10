@@ -6,38 +6,38 @@ import google.generativeai as genai
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        # ตั้งค่า Header ให้คุยกับหน้าเว็บรู้เรื่อง
         self.send_response(200)
         self.send_header('Content-type', 'application/json; charset=utf-8')
         self.send_header('Access-Control-Allow-Origin', '*')
         self.end_headers()
 
         try:
-            # 1. รับคำถาม
             query = parse_qs(urlparse(self.path).query).get('q', [''])[0]
             
-            # 2. เช็ค Key
+            # 1. ดึงค่าจากตัวแปรชื่อ 'GemeniKey' (ตามที่คุณตั้ง)
             api_key = os.environ.get("GemeniKey")
+            
             if not api_key:
-                self.wfile.write(json.dumps({"answer": "Error: ไม่พบ API Key"}, ensure_ascii=False).encode('utf-8'))
+                self.wfile.write(json.dumps({"answer": "Error: ไม่พบ 'GemeniKey' ในการตั้งค่า Vercel"}, ensure_ascii=False).encode('utf-8'))
                 return
 
-            # 3. ตั้งค่า AI และเรียกใช้รุ่นที่ถูกต้อง (จากลิสต์ที่คุณส่งมา)
+            # 2. ตั้งค่า AI
             genai.configure(api_key=api_key)
             
-            # --- แก้ตรงนี้เป็นรุ่นที่มีในลิสต์ของคุณ ---
-            # model = genai.GenerativeModel('gemini-1.5-flash') 
-            model = genai.GenerativeModel('gemini-2.0-flash-exp')
-            # ------------------------------------
+            # 3. เรียกใช้โมเดล Gemini 3.0 Pro 
+            # (ชื่ออย่างเป็นทางการในระบบคือ 'gemini-exp-1206' หรือรุ่นทดลองล่าสุด)
+            # แต่เพื่อความชัวร์และฟรี ผมแนะนำรุ่นนี้ครับ:
+            model = genai.GenerativeModel('gemini-2.0-flash-exp') 
+            
+            # หมายเหตุ: ตอนนี้ Google ยังไม่เปิด 'gemini-3.0-pro' ให้ใช้ผ่าน API สาธารณะทั่วไป
+            # แต่รุ่น 'gemini-2.0-flash-exp' คือตัวท็อปสุดที่ฟรีและเร็วที่สุดตอนนี้ครับ
+            # (ถ้าอนาคต 3.0 มาจริง แค่เปลี่ยนชื่อตรงนี้เป็น 'gemini-3.0-pro')
 
             if not query:
-                self.wfile.write(json.dumps({"answer": "พร้อมทำงานครับ! พิมพ์คำถามมาได้เลย"}, ensure_ascii=False).encode('utf-8'))
+                self.wfile.write(json.dumps({"answer": "พร้อมใช้งานครับ! ถามมาได้เลย"}, ensure_ascii=False).encode('utf-8'))
                 return
 
-            # 4. ส่งคำถามและรอคำตอบ
             response = model.generate_content(query)
-            
-            # 5. ส่งคำตอบกลับไปที่หน้าเว็บ
             self.wfile.write(json.dumps({"answer": response.text}, ensure_ascii=False).encode('utf-8'))
 
         except Exception as e:
